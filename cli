@@ -29,7 +29,7 @@ reconcile_tool() {
 }
 
 reconcile() {
-  find . -type d -maxdepth 1 -not -path . -not -name ".*" | xargs -I '{}' basename "{}" | xargs -I '{}' -n 1 -P 6 ./cli reconcile_tool "{}"
+  find . -maxdepth 1 -type d -not -path . -not -name ".*" | xargs -I '{}' basename "{}" | xargs -I '{}' -n 1 -P 6 ./cli reconcile_tool "{}"
 }
 
 $@
