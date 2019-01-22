@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+which docker-registry-semver-bump > /dev/null 2>&1
+TEST_EXIT=$?
+if [ $TEST_EXIT -ne 0 ]; then
+  echo "docker-registry-semver-bump does not exist, please install it first"
+  exit $TEST_EXIT
+fi
+
+SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN:?"SHOPSTIC_GITHUB_TOKEN env is required"}
+
+set -euo pipefail
+
+reconcile_tool() {
+  NAME=${1:?"Tool name is required"}
+  echo "Reconciling ${NAME}..."
+  CURRENT_VERSION=$(docker-registry-semver-bump -image shopstic/${NAME} -version current)
+  NEW_VERSION=$(cat ./${NAME}/version)
+
+  if [[ "${CURRENT_VERSION}" == "${NEW_VERSION}" ]]; then
+    echo "No need to update ${NAME}"
+    exit 0
+  fi
+
+  echo "Updating ${NAME} from ${CURRENT_VERSION} to ${NEW_VERSION}"
+  cd "./${NAME}"
+  docker build --build-arg "SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN}" -t "shopstic/${NAME}:${NEW_VERSION}" .
+  docker push "shopstic/${NAME}:${NEW_VERSION}"
+}
+
+reconcile() {
+  find . -type d -maxdepth 1 -not -path . -not -name ".*" | xargs -I '{}' basename "{}" | xargs -I '{}' -n 1 -P 6 ./cli reconcile_tool "{}"
+}
+
+$@

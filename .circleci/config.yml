@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: shopstic/docker-builder:0.0.1
+        auth:
+          username: $DOCKER_HUB_USERNAME
+          password: $DOCKER_HUB_PASSWORD
+
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true 
+      - run:
+          name: Docker login
+          command: |
+            docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+      - run:
+          name: Reconcile
+          command: |
+            ./cli reconcile
