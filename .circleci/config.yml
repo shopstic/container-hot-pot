@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: shopstic/docker-builder:0.0.1
+      - image: shopstic/docker-builder:0.0.2
         auth:
           username: $DOCKER_HUB_USERNAME
           password: $DOCKER_HUB_PASSWORD
