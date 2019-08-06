@@ -13,18 +13,19 @@ set -euo pipefail
 
 reconcile_tool() {
   NAME=${1:?"Tool name is required"}
+  FORCE=${2:-""}
   echo "Reconciling ${NAME}..."
   CURRENT_VERSION=$(docker-registry-semver-bump -image shopstic/${NAME} -version current)
   NEW_VERSION=$(cat ./${NAME}/version)
 
-  if [[ "${CURRENT_VERSION}" == "${NEW_VERSION}" ]]; then
+  if [[ "${CURRENT_VERSION}" == "${NEW_VERSION}" && "${FORCE}" != "force" ]]; then
     echo "No need to update ${NAME}"
     exit 0
   fi
 
   echo "Updating ${NAME} from ${CURRENT_VERSION} to ${NEW_VERSION}"
   cd "./${NAME}"
-  docker build --build-arg "SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN}" -t "shopstic/${NAME}:${NEW_VERSION}" .
+  docker build --build-arg "SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN}" --build-arg "PACKAGE_VERSION=${NEW_VERSION}" -t "shopstic/${NAME}:${NEW_VERSION}" .
   docker push "shopstic/${NAME}:${NEW_VERSION}"
 }
 
