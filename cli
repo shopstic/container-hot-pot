@@ -30,7 +30,8 @@ reconcile_tool() {
 }
 
 reconcile() {
-  find . -maxdepth 1 -type d -not -path . -not -name ".*" | xargs -I '{}' basename "{}" | xargs -I '{}' -n 1 -P 6 ./cli reconcile_tool "{}"
+  PARALLELISM=${1:-"6"}
+  find . -maxdepth 1 -type d -not -path . -not -name ".*" | xargs -I '{}' basename "{}" | xargs -I '{}' -n 1 -P ${PARALLELISM} ./cli reconcile_tool "{}"
 }
 
 $@
