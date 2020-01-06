@@ -1,0 +1,29 @@
+image:
+  repository: shopstic/ipmi-exporter
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name:
+
+podSecurityContext: {}
+
+securityContext:
+  privileged: true
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

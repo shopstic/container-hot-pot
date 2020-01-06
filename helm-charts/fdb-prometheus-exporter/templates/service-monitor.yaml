@@ -1,0 +1,22 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "fdb-prometheus-exporter.fullname" . }}
+  labels:
+    {{- include "fdb-prometheus-exporter.labels" . | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      {{- include "fdb-prometheus-exporter.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      honorLabels: true
+      path: /metrics
+      scheme: http
+      interval: 15s
+      scrapeTimeout: 14s
+{{- end }}

@@ -1,0 +1,101 @@
+{{- $configHash := (include (print $.Template.BasePath "/configmap.yaml") . ) | sha256sum -}}
+{{- $secretHash := (include (print $.Template.BasePath "/secret.yaml") . ) | sha256sum -}}
+{{- $jobHash := printf "%v%v" $configHash $secretHash | sha256sum -}}
+{{- $jobName := (printf "%v-%v" (include "kind-builder.fullname" .) $jobHash | trunc 63 | trimSuffix "-") -}}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ $jobName }}
+  labels:
+    {{- include "kind-builder.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size | quote }}
+  {{- with .Values.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $jobName }}
+  labels:
+    {{- include "kind-builder.labels" . | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "kind-builder.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "kind-builder.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: kind-dind
+          securityContext:
+            privileged: true
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: dockerd-var-lib-docker
+              mountPath: /var/lib/docker
+            - name: builds
+              mountPath: /builds
+          command:
+            - /app/build.sh
+          env:
+            - name: JOB_NAME
+              value: {{ $jobName | quote }}
+            - name: RELEASE_NAME
+              value: {{ .Release.Name | quote }}
+            - name: RELEASE_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: SNAPSHOT_CLASS_NAME
+              value: {{ .Values.snapshotClassName | quote }}
+            - name: IAC_GITLAB_REPO_PRIVATE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kind-builder.fullname" . }}
+                  key: iacGitlabRepoPrivateToken
+            - name: IAC_GITLAB_REPO_ARCHIVE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kind-builder.fullname" . }}
+                  key: iacGitlabRepoArchiveUrl
+      volumes:
+        - name: app
+          configMap:
+            name: {{ include "kind-builder.fullname" . }}
+            defaultMode: 0550
+        - name: dockerd-var-lib-docker
+          persistentVolumeClaim:
+            claimName: {{ $jobName }}
+        - name: builds
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

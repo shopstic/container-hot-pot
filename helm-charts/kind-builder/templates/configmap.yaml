@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kind-builder.fullname" . }}
+  labels:
+    {{- include "kind-builder.labels" . | nindent 4 }}
+data:
+  build.sh: |-
+    {{- .Files.Get "app/build.sh" | nindent 4 }}
+  kind-cluster.yaml: |-
+    {{- .Files.Get "app/kind-cluster.yaml" | nindent 4 }}
+  install.sh: |-
+    #!/bin/bash
+    set -euo pipefail
+    {{ .Values.iacGitlabRepo.installScript | nindent 4 }}
+  wait.sh: |-
+    #!/bin/bash
+    set -euo pipefail
+
+    cleanup() {
+      ec=$?
+      echo "Clean up..."
+      kill 0
+      exit $ec
+    }
+
+    trap "exit" INT TERM HUP
+    trap "cleanup" EXIT
+
+    wait_ready() {
+      namespace=${1:?"Namespace is required"}
+      name=${2:?"Name is required"}
+      condition=${3:?"Condition is required"}
+      minSuccessDurationSeconds=${4:?"Mininum success duration (in seconds) is required"}
+
+      echo "Waiting for ${name}"
+
+      startSeconds=$SECONDS
+      lastFailureSeconds=$SECONDS
+
+      until { kubectl -n "${namespace}" wait "--for=condition=${condition}" --timeout=2m "${name}" || lastFailureSeconds=$SECONDS; } && ((SECONDS - lastFailureSeconds > minSuccessDurationSeconds)); do
+      echo "[elapsed=$((SECONDS - startSeconds))s][successDuration=$((SECONDS - lastFailureSeconds))s] Still waiting for ${name} to be ready"
+      sleep 1
+      done
+      echo "[elapsed=$((SECONDS - startSeconds))s][successDuration=$((SECONDS - lastFailureSeconds))s] ${name} is ready!"
+    }
+
+    {{- range $_, $condition := .Values.readyConditions }}
+    wait_ready {{ $condition.namespace }} {{ $condition.name }} {{ $condition.condition }} {{ $condition.minSuccessDurationSeconds }} &
+    {{- end }}
+
+    wait

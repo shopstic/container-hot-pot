@@ -1,0 +1,20 @@
+{{- if .Values.exporter.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ $.Chart.Name }}-log-metrics-exporter-monitor
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $.Chart.Name }}-log-metrics-exporter-monitor
+spec:
+  selector:
+    matchLabels:
+      "app.kubernetes.io/instance": fdb-cluster
+  podMetricsEndpoints:
+    - port: fdb-metrics
+#      honorLabels: true
+#      path: /metrics
+#      scheme: http
+#      interval: 2s
+#      scrapeTimeout: 2s
+{{- end }}

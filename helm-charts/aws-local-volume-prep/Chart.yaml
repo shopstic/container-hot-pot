@@ -1,0 +1,6 @@
+apiVersion: v2
+name: aws-local-volume-prep
+description: AWS Local Volume Prep
+type: application
+version: 0.1.0
+appVersion: 0.0.9

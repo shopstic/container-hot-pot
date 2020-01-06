@@ -1,0 +1,70 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gitlab-runner-kind.fullname" . }}
+  labels:
+    {{- include "gitlab-runner-kind.labels" . | nindent 4 }}
+data:
+  {{ range $path, $_ := .Files.Glob "app/*" }}
+  {{- $path | base }}: |
+    {{- $.Files.Get $path | nindent 4 }}
+  {{ end }}
+  "job-template.sh": |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    JOB_ID=${1:?"Job id is required"}
+    JOB_NAMESPACE=${2:?"Job namespace is required"}
+
+    cat << EOF
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${JOB_ID}
+      namespace: ${JOB_NAMESPACE}
+    spec:
+      dataSource:
+        name: {{ .Values.kindDind.volumeSnapshotName }}
+        kind: VolumeSnapshot
+        apiGroup: snapshot.storage.k8s.io
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .Values.kindDind.volumeSnapshotSize }}
+    ---
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: ${JOB_ID}
+      namespace: ${JOB_NAMESPACE}
+    spec:
+      ttlSecondsAfterFinished: 120
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: kind-dind
+              image: {{ .Values.kindDind.image }}
+              imagePullPolicy: {{ .Values.kindDind.imagePullPolicy }}
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - name: var-lib-docker
+                  mountPath: /var/lib/docker
+                - name: builds
+                  mountPath: /builds
+              {{- with .Values.kindDind.resources }}
+              resources:
+                {{- . | toYaml | nindent 16 }}
+              {{- end  }}
+          volumes:
+            - name: var-lib-docker
+              persistentVolumeClaim:
+                claimName: ${JOB_ID}
+            - name: builds
+              emptyDir: {}
+    EOF

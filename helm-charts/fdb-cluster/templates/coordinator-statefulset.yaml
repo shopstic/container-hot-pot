@@ -1,0 +1,97 @@
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "coordinator" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: {{ .Values.coordinator.count }}
+  podManagementPolicy: "Parallel"
+  selector:
+    matchLabels:
+      {{- include "fdb-cluster.selectorLabels" $root | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fdb-cluster.selectorLabels" $root | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "fdb-cluster.fullname" . }}
+      containers:
+        - name: coordinator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: tcp-fdb
+              containerPort: 4500
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 4500
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 4500
+            initialDelaySeconds: 3
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.coordinator.resources | nindent 12 }}
+          env:
+            - name: FDB_PROCESS_CLASS
+              value: coordinator
+            - name: FDB_PROCESS_PORT
+              value: "4500"
+            - name: FDB_MACHINE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: FDB_PUBLIC_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- if .Values.coordinator.env }}
+            {{- toYaml .Values.coordinator.env | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/data
+            - name: fdb-cluster-file
+              mountPath: /app/fdb.cluster
+              subPath: fdb.cluster
+        {{- include "fdb-cluster.log-metrics-exporter" $root | nindent 8 }}
+      {{- with .Values.coordinator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      volumes:
+        - name: fdb-cluster-file
+          configMap:
+            name: {{ include "fdb-cluster.fullname" . }}-file
+            items:
+              - key: clusterFile
+                path: fdb.cluster
+  volumeClaimTemplates:
+    - metadata:
+        name: app-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+       {{- with .Values.coordinator.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.coordinator.persistence.size }}

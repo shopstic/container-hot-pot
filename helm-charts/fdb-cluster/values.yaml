@@ -1,0 +1,124 @@
+image:
+  repository: shopstic/fdb-server
+  tag: 6.2.22
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+podLabels:
+
+clusterFileConfigMapKubedAnnotation: "use-fdb=true"
+
+cluster:
+  redundancyMode: single
+  storageEngine: ssd-2
+
+init:
+  image:
+    repository: shopstic/fdb-tools
+    tag: 6.2.20
+    pullPolicy: IfNotPresent
+  imagePullSecrets: []
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+tools:
+  count: 1
+  image:
+    repository: shopstic/fdb-tools
+    tag: 6.2.20
+    pullPolicy: IfNotPresent
+  imagePullSecrets: []
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+coordinator:
+  count: 3
+  nodeSelector: {}
+  env: []
+  resources: {}
+  tolerations: []
+  persistence:
+#    storageClassName: "fdb-coordinator"
+    size: 1Gi
+
+storage:
+  count: 1
+  logCountPerPod: 1
+  storageCountPerPod: 1
+  persistence:
+#    storageClassName: "fdb-storage"
+    size: 1Ti
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+log:
+  count: 0
+  logCountPerPod: 1
+  persistence:
+    #    storageClassName: "fdb-log"
+    size: 100Gi
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+proxy:
+  count: 3
+  proxyCountPerPod: 1
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+stateless:
+  resolverCount: 1
+  standbyCount: 2
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+configurator:
+  image:
+    repository: shopstic/fdb-tools
+    tag: 6.2.20
+    pullPolicy: IfNotPresent
+  imagePullSecrets: []
+  env: []
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+exporter:
+  enabled: true
+  image:
+    repository: shopstic/fdb-exporter
+    tag: 1.0.0
+    pullPolicy: IfNotPresent
+  env: []
+  args: []
+  heapMemoryLimitMBs: 512
+  nonHeapMemorySizeMBs: 256
+  resources:
+    requests:
+      cpu: 100m
+    limits:
+      cpu: 1
+  jmx:
+    enabled: false
+    port: 9097

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "aws-local-volume-prep.fullname" . }}
+  labels:
+    {{- include "aws-local-volume-prep.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "aws-local-volume-prep.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "aws-local-volume-prep.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "aws-local-volume-prep.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: {{ .Values.pvMountPath | quote }}
+              name: pv-disks
+              mountPropagation: "Bidirectional"
+          env:
+            - name: ON_COMPLETE_LABEL
+              value: {{ .Values.onCompleteLabel | quote }}
+            - name: ON_COMPLETE_LABEL_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: PV_MOUNT_PATH
+              value: {{ .Values.pvMountPath | quote }}
+      volumes:
+        - name: pv-disks
+          hostPath:
+            path: {{ .Values.pvMountPath | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.onCompleteLabel | quote }}
+                operator: NotIn
+                values:
+                - 'true'
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

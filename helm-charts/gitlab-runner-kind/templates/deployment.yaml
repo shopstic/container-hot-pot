@@ -1,0 +1,93 @@
+{{- $configHash := (include (print $.Template.BasePath "/configmap.yaml") . ) | sha256sum -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gitlab-runner-kind.fullname" . }}
+  labels:
+    {{- include "gitlab-runner-kind.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gitlab-runner-kind.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        "config-hash": {{ $configHash }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "gitlab-runner-kind.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "gitlab-runner-kind.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+          volumeMounts:
+            - mountPath: /app
+              name: app
+            - mountPath: /builds
+              name: builds
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: GITLAB_RUNNER_REGISTER_URL
+              value: {{ .Values.gitlabRunner.register.url | quote }}
+            - name: GITLAB_RUNNER_REGISTER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gitlab-runner-kind.fullname" . }}
+                  key: gitlabRunnerRegisterRegistrationToken
+            - name: GITLAB_RUNNER_JOB_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: KIND_DIND_VOLUME_SNAPSHOT_NAME
+              value: {{ .Values.kindDind.volumeSnapshotName | quote }}
+            - name: KIND_DIND_VOLUME_SNAPSHOT_SIZE
+              value: {{ .Values.kindDind.volumeSnapshotSize | quote }}
+            - name: KIND_DIND_IMAGE
+              value: {{ .Values.kindDind.image | quote }}
+          command:
+            - /app/register.sh
+      volumes:
+        - name: app
+          configMap:
+            name: {{ include "gitlab-runner-kind.fullname" . }}
+            defaultMode: 0550
+        - name: builds
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

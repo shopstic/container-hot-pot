@@ -1,0 +1,149 @@
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "storage" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+{{- $logCountPerPod := .Values.storage.logCountPerPod | int -}}
+{{- $storageCountPerPod := .Values.storage.storageCountPerPod | int -}}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: {{ .Values.storage.count }}
+  podManagementPolicy: "Parallel"
+  selector:
+    matchLabels:
+      {{- include "fdb-cluster.selectorLabels" $root | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fdb-cluster.selectorLabels" $root | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "fdb-cluster.fullname" . }}
+      containers:
+        {{- range untilStep 0 $logCountPerPod 1 }}
+        {{- $fdbPort := add 4500 .  }}
+        - name: log-{{ $fdbPort }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - name: tcp-{{ $fdbPort }}
+              containerPort: {{ $fdbPort }}
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: {{ $fdbPort }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: {{ $fdbPort }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            {{- toYaml $.Values.storage.resources | nindent 12 }}
+          env:
+            - name: FDB_PROCESS_CLASS
+              value: log
+            - name: FDB_PROCESS_PORT
+              value: {{ $fdbPort | quote }}
+            - name: FDB_MACHINE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- if $.Values.storage.env }}
+            {{- toYaml $.Values.storage.env | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/data
+            - name: fdb-cluster-file
+              mountPath: /app/fdb.cluster
+              subPath: fdb.cluster
+        {{- end }}
+
+        {{- range untilStep 0 $storageCountPerPod 1 }}
+        {{- $fdbPort := add 5000 .  }}
+        - name: storage-{{ $fdbPort }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - name: tcp-{{ $fdbPort }}
+              containerPort: {{ $fdbPort }}
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: {{ $fdbPort }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: {{ $fdbPort }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+          {{- toYaml $.Values.storage.resources | nindent 12 }}
+          env:
+            - name: FDB_PROCESS_CLASS
+              value: storage
+            - name: FDB_PROCESS_PORT
+              value: {{ $fdbPort | quote }}
+            - name: FDB_MACHINE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- if $.Values.storage.env }}
+            {{- toYaml $.Values.storage.env | nindent 12 }}
+          {{- end }}
+
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/data
+            - name: fdb-cluster-file
+              mountPath: /app/fdb.cluster
+              subPath: fdb.cluster
+        {{- end }}
+        {{- include "fdb-cluster.log-metrics-exporter" $root | nindent 8 }}
+      {{- with .Values.storage.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.storage.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.storage.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      volumes:
+        - name: fdb-cluster-file
+          configMap:
+            name: {{ include "fdb-cluster.fullname" . }}-file
+            items:
+              - key: clusterFile
+                path: fdb.cluster
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "kubernetes.io/hostname"
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "fdb-cluster.selectorLabels" $root | nindent 14 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: app-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.storage.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.persistence.size }}

@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ceph-mgr-lb.fullname" . }}-config
+  labels:
+    {{- include "ceph-mgr-lb.labels" . | nindent 4 }}
+data:
+  haproxy.cfg: |-
+    global
+      user haproxy
+      group haproxy
+
+    defaults
+      timeout connect 5s
+      timeout client 10s
+      timeout server 10s
+      timeout client-fin 10s
+      mode http
+
+    listen dashboard
+      bind *:{{ .Values.service.dashboardPort }}
+      balance roundrobin
+      option httpchk GET /
+      http-check expect status 200
+      option log-health-checks
+      default-server inter 1s fall 1 rise 1 check
+      {{- range $key, $value := .Values.hosts }}
+      server {{ $key }} {{ $value }}:8080
+      {{- end }}
+
+    listen metrics
+      bind *:{{ .Values.service.metricsPort }}
+      balance roundrobin
+      option httpchk GET /
+      http-check expect rstring href=\'/metrics
+      option log-health-checks
+      default-server inter 3s fall 1 rise 1 check
+      {{- range $key, $value := .Values.hosts }}
+      server {{ $key }} {{ $value }}:9283
+      {{- end }}
+
+    frontend stats
+      bind *:{{ .Values.service.statsPort }}
+      stats enable
+      stats uri /stats
+      stats refresh 5s
+      stats admin if TRUE

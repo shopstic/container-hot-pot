@@ -1,0 +1,17 @@
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "config" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+data:
+  clusterConfiguration: |-
+    {
+      "resolvers": {{ .Values.stateless.resolverCount }},
+      "proxies": {{ mul .Values.proxy.count .Values.proxy.proxyCountPerPod }},
+      "logs": {{ add .Values.log.count (mul .Values.storage.count .Values.storage.logCountPerPod) }},
+      "redundancy_mode": {{ .Values.cluster.redundancyMode | quote }},
+      "storage_engine": {{ .Values.cluster.storageEngine | quote }}
+    }

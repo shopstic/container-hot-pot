@@ -1,0 +1,94 @@
+{{- $scriptHash := .Files.Get "scripts/init.sh" | sha256sum -}}
+{{- $configHash := (include (print $.Template.BasePath "/cluster-file-configmap.yaml") . ) | sha256sum -}}
+{{- $jobHash := (printf "%v%v" $scriptHash $configHash | sha256sum) -}}
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "init" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+{{- $clusterFileConfigMapName := printf "%s-%s" (include "fdb-cluster.fullname" .) "file" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-config
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+data:
+  init.sh: |-
+    {{- .Files.Get "scripts/init.sh" | nindent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "fdb-cluster.selectorLabels" $root | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "fdb-cluster.fullname" . }}
+      containers:
+        - name: {{ .Chart.Name }}-init
+          image: "{{ .Values.init.image.repository }}:{{ .Values.init.image.tag }}"
+          imagePullPolicy: {{ .Values.init.image.pullPolicy }}
+          command: ["/app/init.sh"]
+          volumeMounts:
+            - name: fdb-init
+              mountPath: /app/init.sh
+              subPath: init.sh
+          env:
+            - name: FDB_CLUSTER_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: FDB_CLUSTER_FILE_CONFIGMAP_NAME
+              value: {{ $clusterFileConfigMapName | quote }}
+            {{- with .Values.coordinator.nodeSelector }}
+            - name: FDB_COORDINATOR_NODE_LABEL
+              value: {{ toJson . | quote }}
+            {{- end }}
+            {{- with .Values.coordinator.clusterId }}
+            - name: FDB_CLUSTER_ID
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.coordinator.clusterDescription }}
+            - name: FDB_CLUSTER_DESCRIPTION
+              value: {{ . | quote }}
+            {{- end }}
+
+            {{- if .Values.init.env }}
+            {{- toYaml .Values.init.env | nindent 12 }}
+            {{- end }}
+      restartPolicy: Never
+      volumes:
+        - name: fdb-init
+          configMap:
+            name: {{ $name }}-config
+            defaultMode: 0550
+            items:
+              - key: init.sh
+                path: init.sh
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      {{- with .Values.init.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.init.affinity }}
+      affinity:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.init.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}

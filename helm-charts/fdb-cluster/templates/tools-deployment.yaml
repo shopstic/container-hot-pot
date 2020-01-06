@@ -1,0 +1,65 @@
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "tools" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+spec:
+  replicas: {{ .Values.tools.count }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "fdb-cluster.selectorLabels" $root | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fdb-cluster.selectorLabels" $root | nindent 8 }}
+    spec:
+      {{- with .Values.tools.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}-tools
+          image: "{{ .Values.tools.image.repository }}:{{ .Values.tools.image.tag }}"
+          imagePullPolicy: {{ .Values.tools.image.pullPolicy }}
+          command: ["/bin/bash"]
+          args: ["-c", "trap : TERM INT; sleep infinity & wait"]
+          {{- with .Values.tools.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tools.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: fdb-cluster-file
+              mountPath: /etc/foundationdb/fdb.cluster
+              subPath: fdb.cluster
+      volumes:
+        - name: fdb-cluster-file
+          configMap:
+            name: {{ include "fdb-cluster.fullname" . }}-file
+            items:
+              - key: clusterFile
+                path: fdb.cluster
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      {{- with .Values.tools.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tools.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tools.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gitlab-runner-kind
+description: Gitlab Runner - Kubernetes-in-Docker
+type: application
+version: 0.1.0
+appVersion: 12.9.0

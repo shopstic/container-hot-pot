@@ -1,0 +1,53 @@
+replicaCount: 1
+
+image:
+  repository: shopstic/gitlab-runner-kind
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+gitlabRunner:
+  register:
+    url: https://gitlab.syni.dev
+    registrationToken: ""
+
+kindDind:
+  image: shopstic/kind-dind:1.0.7
+  imagePullPolicy: IfNotPresent
+  volumeSnapshotName: kind-builder
+  volumeSnapshotSize: 15Gi
+  resources:
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

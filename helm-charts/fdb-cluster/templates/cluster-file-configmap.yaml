@@ -1,0 +1,15 @@
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "file" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+  annotations:
+    kubed.appscode.com/sync: {{ $root.Values.clusterFileConfigMapKubedAnnotation | quote }}
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-100"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+data:
+  clusterFile: ""

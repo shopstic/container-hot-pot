@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ceph-mgr-lb.fullname" . }}
+  labels:
+    {{- include "ceph-mgr-lb.labels" . | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      {{- include "ceph-mgr-lb.selectorLabels" . | nindent 8 }}
+  endpoints:
+    - port: http-metrics
+      honorLabels: true
+      path: /metrics
+      scheme: http
+      interval: 3s
+      scrapeTimeout: 3s
+      relabelings:
+        - action: labeldrop
+          regex: 'pod'
+        - action: replace
+          regex: "(.*)"
+          targetLabel: "instance"
+          replacement: {{ include "ceph-mgr-lb.name" . | quote }}

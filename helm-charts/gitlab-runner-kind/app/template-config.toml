@@ -1,0 +1,11 @@
+[[runners]]
+  [runners.cache]
+    Type = "s3"
+    Path = "gitlab-runner"
+    Shared = true
+    [runners.cache.s3]
+      ServerAddress = "minio.syni.dev"
+      AccessKey = "03eYmSeQWCFCWpVLrE1K7J2swTPG2nlaosC6EZhiLPuOxCz0MsTDzXa6afffjxgs"
+      SecretKey = "FmuL9asGsWZaSVGFN2RKRJyNyYKygAdqBRLXJUum7NavEXfBNx82FIEfy6YtYs74"
+      BucketName = "runner-cache"
+      BucketLocation = "us-east-1"

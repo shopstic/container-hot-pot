@@ -1,0 +1,90 @@
+{{- $configureHash := .Files.Get "scripts/configure.sh" | sha256sum -}}
+{{- $configHash := (include (print $.Template.BasePath "/cluster-configuration-configmap.yaml") . ) | sha256sum -}}
+{{- $jobHash := (printf "%v%v" $configureHash $configHash | sha256sum) -}}
+{{- $jobName := (printf "%v-%v" (include "fdb-cluster.fullname" .) "configurator") -}}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $jobName)) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $jobName }}-config
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+data:
+  configure.sh: |-
+    {{- .Files.Get "scripts/configure.sh" | nindent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $jobName }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+spec:
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 20
+  template:
+    metadata:
+      labels:
+        {{- include "fdb-cluster.selectorLabels" $root | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-configurator
+          image: "{{ .Values.configurator.image.repository }}:{{ .Values.configurator.image.tag }}"
+          imagePullPolicy: {{ .Values.configurator.image.pullPolicy }}
+          command: ["/app/configure.sh"]
+          volumeMounts:
+            - name: fdb-cluster-file
+              mountPath: /etc/foundationdb/fdb.cluster
+              subPath: fdb.cluster
+            - name: fdb-cluster-configuration
+              mountPath: /app/fdb.json
+              subPath: fdb.json
+            - name: fdb-configure
+              mountPath: /app/configure.sh
+              subPath: configure.sh
+      restartPolicy: Never
+      volumes:
+        - name: fdb-cluster-file
+          configMap:
+            name: {{ include "fdb-cluster.fullname" . }}-file
+            items:
+              - key: clusterFile
+                path: fdb.cluster
+        - name: fdb-cluster-configuration
+          configMap:
+            name: {{ include "fdb-cluster.fullname" . }}-config
+            items:
+              - key: clusterConfiguration
+                path: fdb.json
+        - name: fdb-configure
+          configMap:
+            name: {{ $jobName }}-config
+            defaultMode: 0550
+            items:
+              - key: configure.sh
+                path: configure.sh
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      {{- with .Values.configurator.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.configurator.affinity }}
+      affinity:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.configurator.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}

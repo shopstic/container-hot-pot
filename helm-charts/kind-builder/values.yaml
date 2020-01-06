@@ -1,0 +1,47 @@
+replicaCount: 1
+
+image:
+  repository: shopstic/kind-dind
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  privileged: true
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 15Gi
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+snapshotClassName: "csi-rbdplugin-snapclass"
+
+readyConditions: []
+
+iacGitlabRepo:
+  archiveUrl: ""
+  privateToken: ""
+  installScript: ""

@@ -1,0 +1,93 @@
+{{- $name := printf "%s-%s" (include "fdb-cluster.fullname" .) "stateless" }}
+{{- $root := . | deepCopy | merge (dict "Values" (dict "nameOverride" $name)) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "fdb-cluster.labels" $root | nindent 4 }}
+spec:
+  replicas: {{ add .Values.stateless.resolverCount .Values.stateless.standbyCount 2 }}
+  selector:
+    matchLabels:
+      {{- include "fdb-cluster.selectorLabels" $root | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fdb-cluster.selectorLabels" $root | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "fdb-cluster.fullname" . }}
+      containers:
+        - name: stateless
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: tcp-fdb
+              containerPort: 4500
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 4500
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 4500
+            initialDelaySeconds: 3
+            periodSeconds: 20
+          {{- with .Values.stateless.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: FDB_PROCESS_CLASS
+              value: stateless
+            - name: FDB_PROCESS_PORT
+              value: "4500"
+            - name: FDB_MACHINE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- with .Values.stateless.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/data
+            - name: fdb-cluster-file
+              mountPath: /app/fdb.cluster
+              subPath: fdb.cluster
+        {{- include "fdb-cluster.log-metrics-exporter" $root | nindent 8 }}
+      {{- with .Values.stateless.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.stateless.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.stateless.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "kubernetes.io/hostname"
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "fdb-cluster.selectorLabels" $root | nindent 14 }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      volumes:
+        - name: fdb-cluster-file
+          configMap:
+            name: {{ include "fdb-cluster.fullname" . }}-file
+            items:
+              - key: clusterFile
+                path: fdb.cluster
+        - name: app-data
+          emptyDir: {}

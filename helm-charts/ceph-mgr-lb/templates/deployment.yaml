@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ceph-mgr-lb.fullname" . }}
+  labels:
+    {{- include "ceph-mgr-lb.labels" . | nindent 4 }}
+  annotations:
+    configmap.reloader.stakater.com/reload: {{ include "ceph-mgr-lb.fullname" . }}-config
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ceph-mgr-lb.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ceph-mgr-lb.selectorLabels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "ceph-mgr-lb.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: dashboard
+              containerPort: {{ .Values.service.dashboardPort }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.service.metricsPort }}
+              protocol: TCP
+            - name: stats
+              containerPort: {{ .Values.service.statsPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /stats
+              port: stats
+          readinessProbe:
+            httpGet:
+              path: /stats
+              port: stats
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: app-config
+              mountPath: /usr/local/etc/haproxy
+              readOnly: true
+      volumes:
+        - name: app-config
+          configMap:
+            name: {{ include "ceph-mgr-lb.fullname" . }}-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

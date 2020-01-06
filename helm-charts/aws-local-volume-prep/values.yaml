@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: shopstic/aws-local-pv-prep
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  privileged: true
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+onCompleteLabel: aws-local-pv-prep-completed
+pvMountPath: "/local-pv"
