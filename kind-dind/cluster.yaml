@@ -1,0 +1,11 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  podSubnet: "10.255.252.0/24"
+  serviceSubnet: "10.255.253.0/24"
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.17.2@sha256:59df31fc61d1da5f46e8a61ef612fa53d3f9140f82419d1ef1a6b9656c6b737c
+    extraMounts:
+      - hostPath: /builds
+        containerPath: /builds
