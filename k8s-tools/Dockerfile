@@ -98,6 +98,20 @@ RUN \
   cd /tmp/terraform && \
   wget -O terraform.zip https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip && \
   unzip terraform.zip && \
+  wget -O terraform-provider-sops.zip https://github.com/carlpett/terraform-provider-sops/releases/download/v0.5.0/terraform-provider-sops_v0.5.0_linux_amd64.zip && \
+  unzip terraform-provider-sops.zip && \
+  mv terraform /usr/bin/terraform && \
+  mkdir -p /root/.terraform.d/plugins && \
+  mv terraform-provider-sops_v0.5.0 /root/.terraform.d/plugins/terraform-provider-sops_v0.5.0 && \
+  chmod +x /usr/bin/terraform && \
+  chmod +x /root/.terraform.d/plugins/terraform-provider-sops_v0.5.0 && \
+  rm -Rf /tmp/terraform
+
+RUN \
+  mkdir /tmp/terraform && \
+  cd /tmp/terraform && \
+  wget -O terraform.zip https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip && \
+  unzip terraform.zip && \
   mv terraform /usr/bin/terraform && \
   chmod +x /usr/bin/terraform && \
   rm -Rf /tmp/terraform
@@ -109,6 +123,13 @@ RUN \
 RUN \
   curl -Lo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64 && \
   chmod +x /usr/bin/yq
+
+RUN \
+  curl -Lo /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/aws-iam-authenticator && \
+  chmod +x /usr/bin/aws-iam-authenticator
+
+RUN \
+  helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 
 VOLUME /ssh
 VOLUME /iac
