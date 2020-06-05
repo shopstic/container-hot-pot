@@ -1,6 +1,7 @@
 apiVersion: v2
 name: fdb-prometheus-exporter
 description: FoundationDB Prometheus Exporter
+home: https://github.com/shopstic/container-hot-pot
 type: application
 version: 0.1.0
 appVersion: 1.16.0

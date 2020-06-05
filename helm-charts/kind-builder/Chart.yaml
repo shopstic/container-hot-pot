@@ -1,6 +1,7 @@
 apiVersion: v2
 name: kind-builder
 description: Kubernetes-in-Docker Builder
+home: https://github.com/shopstic/container-hot-pot
 type: application
 version: 0.1.0
 appVersion: 1.0.9

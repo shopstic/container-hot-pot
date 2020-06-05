@@ -1,6 +1,7 @@
 apiVersion: v2
 name: ceph-mgr-lb
 description: Ceph Dashboard Lb
+home: https://github.com/shopstic/container-hot-pot
 type: application
 version: 0.1.0
 appVersion: 1.0.0
