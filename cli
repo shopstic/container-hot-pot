@@ -31,7 +31,9 @@ reconcile_tool() {
 
 reconcile() {
   PARALLELISM=${1:-"6"}
-  find . -maxdepth 1 -type d -not -path . -not -name ".*" | xargs -I '{}' basename "{}" | xargs -I '{}' -n 1 -P ${PARALLELISM} ./cli reconcile_tool "{}"
+  find . -maxdepth 1 -type d -not -path . -not -name ".*" -exec test -e "{}/version" ';' -print | \
+    xargs -I '{}' basename "{}" | \
+    xargs -I '{}' -n 1 -P ${PARALLELISM} ./cli reconcile_tool "{}"
 }
 
 $@
