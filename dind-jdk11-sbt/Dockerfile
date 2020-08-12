@@ -3,7 +3,8 @@ FROM docker:stable-dind
 RUN \
   apk add bash && \
   apk add openjdk11 && \
-  apk add curl
+  apk add curl && \
+  apk add git
 
 ARG PACKAGE_VERSION
 
