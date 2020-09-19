@@ -1,4 +1,4 @@
-FROM haproxy:2.1.4
+FROM haproxy:2.2.3
 
 ENV HAPROXY_USER haproxy
 
