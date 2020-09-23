@@ -1,4 +1,4 @@
-#!/usr/bin/dumb-init /bin/bash
+#!/usr/bin/dumb-init /bin/zsh
 set -euo pipefail
 
 REMOTE_SSH_CONFIG_PATH=${REMOTE_SSH_CONFIG_PATH:?"REMOTE_SSH_CONFIG_PATH env is not provided"}
@@ -26,7 +26,7 @@ echo "LogLevel VERBOSE" >> /etc/ssh/sshd_config
 
 /usr/sbin/sshd -f /etc/ssh/sshd_config -E /root/sshd_log.txt || (cat /root/sshd_log.txt; exit 1)
 
-cat << EOF >> /root/.bashrc
+cat << EOF >> /root/.zshrc
 export HOST_EXEC="ssh -qt -o StrictHostKeyChecking=no -p 12222 ${REMOTE_SSH_USER}@localhost"
 export HOST_SHELL="${REMOTE_SSH_SHELL}"
 alias hostexec="ssh -qt -o StrictHostKeyChecking=no -p 12222 ${REMOTE_SSH_USER}@localhost"
@@ -36,4 +36,4 @@ minikube() {
 EOF
 
 touch /ssh/ready
-bash
+zsh -l

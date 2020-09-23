@@ -19,14 +19,18 @@ RUN \
     unzip \
     pv \
     rsync \
-    jq && \
+    jq \
+    vim \
+    zsh && \
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
   add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable" && \
-  apt-get update && \
-  apt-get install -y docker-ce-cli
+  apt-get install -y docker-ce-cli && \
+  curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+  apt-get install -y nodejs && \
+  rm -rf /var/lib/apt/lists/*
 
 ENV K8S_VERSION "1.19.2"
 ENV K9S_VERSION "0.22.1"
@@ -38,6 +42,7 @@ ENV AWSCLI_VERSION "2.0.50"
 ENV STERN_VERSION "1.11.0"
 ENV KUBE_PS1_VERSION "0.7.0"
 ENV YQ_VERSION "3.4.0"
+ENV DENO_VERSION "1.4.1"
 
 RUN \
   wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
@@ -50,21 +55,6 @@ RUN \
 RUN \
   curl -Lo /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 && \
   chmod +x /usr/bin/dumb-init
-
-RUN \
-  set -x; cd "$(mktemp -d)" && \
-  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/v${KREW_VERSION}/download/krew.{tar.gz,yaml}" && \
-  tar zxvf krew.tar.gz && \
-  KREW=./krew-"$(uname | tr '[:upper:]' '[:lower:]')_amd64" && \
-  "$KREW" install --manifest=krew.yaml --archive=krew.tar.gz && \
-  "$KREW" update && \
-  echo 'PATH="/root/.krew/bin:$PATH"' >> /root/.bashrc
-
-ENV PATH="/root/.krew/bin:$PATH"
-
-RUN \
-  kubectl krew install ctx && \
-  kubectl krew install ns
 
 RUN \
   mkdir -p /tmp/helm && \
@@ -91,23 +81,34 @@ RUN \
   chmod +x /usr/bin/stern
 
 RUN \
-  wget -O /root/kube-ps1.sh https://raw.githubusercontent.com/jonmosco/kube-ps1/v${KUBE_PS1_VERSION}/kube-ps1.sh && \
-  echo "KUBE_PS1_CTX_COLOR=white" >> /root/.bashrc && \
-  echo "KUBE_PS1_SYMBOL_COLOR=cyan" >> /root/.bashrc && \
-  echo "source /root/kube-ps1.sh" >> /root/.bashrc && \
-  echo "PS1='[\\u@\\h \\W \$(kube_ps1)]\\$ '" >> /root/.bashrc
+  wget -O /root/kube-ps1.sh https://raw.githubusercontent.com/jonmosco/kube-ps1/v${KUBE_PS1_VERSION}/kube-ps1.sh
 
 RUN \
   curl -Lo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 && \
   chmod +x /usr/bin/yq
 
+RUN \
+  set -x; cd "$(mktemp -d)" && \
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/download/v${KREW_VERSION}/krew.{tar.gz,yaml}" && \
+  tar zxvf krew.tar.gz && \
+  KREW=./krew-"$(uname | tr '[:upper:]' '[:lower:]')_amd64" && \
+  "$KREW" install --manifest=krew.yaml --archive=krew.tar.gz && \
+  "$KREW" update && \
+  export PATH="/root/.krew/bin:$PATH" && \
+  kubectl krew install ctx && \
+  kubectl krew install ns
+
+RUN \
+  curl -fsSL https://deno.land/x/install/install.sh | sh -s v${DENO_VERSION}
+
+RUN \
+  npm install -g json-schema-to-typescript
+
 VOLUME /ssh
 VOLUME /iac
 WORKDIR /iac
 
-RUN \
-  echo 'PATH="/iac:$PATH"' >> /root/.bashrc
-
+ADD ./.zshrc /root/.zshrc
 ADD ./entrypoint.sh /usr/bin/entrypoint.sh
 
 ENV LC_ALL=C.UTF-8
