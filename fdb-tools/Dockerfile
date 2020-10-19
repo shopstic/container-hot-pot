@@ -42,3 +42,7 @@ RUN apt-get install /tmp/fdb/fdb.deb && \
 COPY --from=0 /out/* /usr/bin/
 
 USER foundationdb:foundationdb
+
+ADD ./entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

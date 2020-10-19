@@ -1,5 +1,18 @@
 #!/usr/bin/dumb-init /bin/bash
+# shellcheck shell=bash
 set -euo pipefail
+
+FDB_EXPECTED_CONNECTION_STRING=${FDB_EXPECTED_CONNECTION_STRING:?"FDB_EXPECTED_CONNECTION_STRING env variable is required"}
+export FDB_CLUSTER_FILE=${FDB_CLUSTER_FILE:-"/app/fdb.cluster"}
+
+CONNECTION_STRING=${FDB_LATEST_CONNECTION_STRING:-""}
+if [[ "${CONNECTION_STRING}" == "" ]]; then
+  CONNECTION_STRING="${FDB_EXPECTED_CONNECTION_STRING}"
+fi
+
+echo "CONNECTION_STRING=${CONNECTION_STRING}"
+echo "FDB_CLUSTER_FILE=${FDB_CLUSTER_FILE}"
+echo "${CONNECTION_STRING}" > "${FDB_CLUSTER_FILE}"
 
 FDB_PROCESS_PORT=${FDB_PROCESS_PORT:?"FDB_PROCESS_PORT env variable is required"}
 FDB_PROCESS_CLASS=${FDB_PROCESS_CLASS:?"FDB_PROCESS_CLASS env variable is required"}
@@ -38,7 +51,7 @@ echo "FDB_PUBLIC_IP=${FDB_PUBLIC_IP}"
 
 /usr/bin/fdbserver \
   --class "${FDB_PROCESS_CLASS}" \
-  --cluster_file /app/fdb.cluster \
+  --cluster_file "${FDB_CLUSTER_FILE}" \
   --datadir "${FDB_PROCESS_DATA_DIR}" \
   --listen_address "0.0.0.0:${FDB_PROCESS_PORT}" \
   --locality_machineid "${FDB_MACHINE_ID}" \

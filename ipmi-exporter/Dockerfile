@@ -1,20 +1,18 @@
-FROM quay.io/prometheus/golang-builder:1.13-base AS builder
+FROM shopstic/curl-tar-unzip:1.0.0 as ipmi-exporter
+
+ARG PACKAGE_VERSION
 
 RUN \
-  git clone --depth=1 https://github.com/soundcloud/ipmi_exporter.git /tmp/app && \
-  cd /tmp/app && \
-  make && \
-  cp /tmp/app/ipmi_exporter /bin/ipmi_exporter && \
-  rm -Rf /tmp/app
+  curl -Lo - https://github.com/soundcloud/ipmi_exporter/releases/download/v${PACKAGE_VERSION}/ipmi_exporter-v${PACKAGE_VERSION}.linux-amd64.tar.gz | tar -xz --strip-components=1 -C /usr/bin/ && \
+  chmod +x /usr/bin/ipmi_exporter
 
-# Container image
-FROM debian:stretch-slim
+FROM debian:bullseye-20200908-slim
 WORKDIR /
 RUN apt-get update \
-    && apt-get install freeipmi-tools -y --no-install-recommends \
+    && apt-get install freeipmi -y \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /bin/ipmi_exporter /bin/ipmi_exporter
+COPY --from=ipmi-exporter /usr/bin/ipmi_exporter /usr/bin/ipmi_exporter
 
 EXPOSE 9290
-ENTRYPOINT ["/bin/ipmi_exporter"]
+ENTRYPOINT ["/usr/bin/ipmi_exporter"]
