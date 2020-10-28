@@ -1,8 +1,9 @@
-FROM openjdk:11.0.7-slim as stage0
+FROM openjdk:11.0.9-slim as stage0
 
 RUN \
   apt-get update && \
-  apt-get install -y curl unzip
+  apt-get install -y curl unzip git && \
+  rm -rf /var/lib/apt/lists/*
 
 ARG PACKAGE_VERSION
 
@@ -13,19 +14,18 @@ RUN \
   unzip sbt.zip && rm -Rf sbt.zip && rm -Rf sbt/lib && mv /sbt/sbt/* /sbt/ && rm -Rf sbt && \
   chmod a+x /sbt/bin/sbt
 
-RUN \
-  cd /sbt/bin && \
-  curl -Lo sbt-client.gz https://github.com/cb372/sbt-client/releases/download/v0.1.2/sbt-client-v0.1.2-x86_64-unknown-linux-gnu.gz && \
-  gunzip sbt-client.gz && \
-  rm -f sbt-client.gz && \
-  chmod +x sbt-client
-
 ENV PATH="$PATH:/sbt/bin"
 
-RUN sbt sbtVersion
+RUN \
+  mkdir ~/temp && \
+  cd ~/temp && \
+  sbt sbtVersion && \
+  rm -Rf ~/temp
+
+ENV FDB_VERSION "6.2.27"
 
 RUN \
-  curl -Lko fdb-clients.deb https://www.foundationdb.org/downloads/6.2.20/ubuntu/installers/foundationdb-clients_6.2.20-1_amd64.deb && \
+  curl -Lko fdb-clients.deb https://www.foundationdb.org/downloads/${FDB_VERSION}/ubuntu/installers/foundationdb-clients_${FDB_VERSION}-1_amd64.deb && \
   apt-get install ./fdb-clients.deb && \
   rm -f fdb-clients.deb
 

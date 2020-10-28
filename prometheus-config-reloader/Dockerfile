@@ -5,7 +5,7 @@ ARG PACKAGE_VERSION
 WORKDIR /app
 
 RUN \
-  wget -O - https://github.com/coreos/prometheus-operator/archive/v${PACKAGE_VERSION}.tar.gz | tar -xz -C . --strip-components=1
+  wget -O - https://github.com/prometheus-operator/prometheus-operator/archive/v${PACKAGE_VERSION}.tar.gz | tar -xz -C . --strip-components=1
 
 RUN \
   LINE=$(awk '/package main/{ print NR; exit }' ./cmd/prometheus-config-reloader/main.go) && \

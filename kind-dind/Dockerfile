@@ -1,7 +1,7 @@
 # kubectl ------------------------------------------------------------------
 FROM shopstic/curl-tar-unzip:1.0.1 as kubectl
 
-ENV K8S_VERSION "1.19.2"
+ENV K8S_VERSION "1.19.3"
 
 RUN \
   curl -Lo /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
@@ -15,15 +15,6 @@ ENV K9S_VERSION "0.22.1"
 RUN \
   curl -Lo - https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_x86_64.tar.gz | tar -xz -C /usr/bin/ && \
   chmod +x /usr/bin/k9s
-
-# dumb-init ------------------------------------------------------------------
-FROM shopstic/curl-tar-unzip:1.0.0 as dumb-init
-
-ENV DUMB_INIT_VERSION "1.2.2"
-
-RUN \
-  curl -Lo /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 && \
-  chmod +x /usr/bin/dumb-init
 
 # kind ------------------------------------------------------------------
 FROM shopstic/curl-tar-unzip:1.0.0 as kind
@@ -105,14 +96,22 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
 RUN \
   set -eux; \
   apk add --no-cache \
-  curl bash git jq rsync pv lz4
+  curl bash git jq rsync pv lz4 gnupg
 
 RUN \
   ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws
 
+ENV TINI_VERSION "v0.19.0"
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
+RUN \
+  chmod +x /bin/tini && \
+  mv /bin/bash /bin/bash.real
+COPY --from=shopstic/tinish:1.0.0 /bin/tinish /bin/bash
+
 COPY --from=kubectl /usr/bin/kubectl /usr/bin/kubectl
 COPY --from=k9s /usr/bin/k9s /usr/bin/k9s
-COPY --from=dumb-init /usr/bin/dumb-init /usr/bin/dumb-init
 COPY --from=buildx /root/.docker/cli-plugins /root/.docker/cli-plugins
 COPY --from=kind /usr/bin/kind /usr/bin/kind
 COPY --from=aws-cli /usr/local/aws-cli /usr/local/aws-cli
+
+ENTRYPOINT ["/bin/bash"]
