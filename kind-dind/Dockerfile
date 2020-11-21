@@ -50,6 +50,14 @@ RUN \
   ./aws/install && \
   rm -Rf /root/awscli
 
+FROM shopstic/curl-tar-unzip:1.0.0 as reg
+
+ENV REG_VERSION "0.16.1"
+
+RUN \
+  curl -Lo /usr/bin/reg https://github.com/genuinetools/reg/releases/download/v${REG_VERSION}/reg-linux-amd64 && \
+  chmod +x /usr/bin/reg
+
 FROM docker:19.03.13-dind
 
 ENV LANG=C.UTF-8
@@ -113,5 +121,6 @@ COPY --from=k9s /usr/bin/k9s /usr/bin/k9s
 COPY --from=buildx /root/.docker/cli-plugins /root/.docker/cli-plugins
 COPY --from=kind /usr/bin/kind /usr/bin/kind
 COPY --from=aws-cli /usr/local/aws-cli /usr/local/aws-cli
+COPY --from=reg /usr/bin/reg /usr/bin/reg
 
 ENTRYPOINT ["/bin/bash"]
