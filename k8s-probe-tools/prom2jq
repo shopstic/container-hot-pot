@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+METRICS_URI=${1:?"Metrics URI is required"}
+shift
+/k8s-probe-tools/curl -sf "${METRICS_URI}" | /k8s-probe-tools/prom2json | /k8s-probe-tools/jq "$@"
