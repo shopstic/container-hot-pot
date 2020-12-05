@@ -1,4 +1,4 @@
-FROM openjdk:11.0.9-slim as stage0
+FROM openjdk:11.0.9.1-slim as stage0
 
 RUN \
   apt-get update && \
