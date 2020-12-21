@@ -32,17 +32,20 @@ RUN \
   apt-get install -y nodejs && \
   rm -rf /var/lib/apt/lists/*
 
-ENV K8S_VERSION "1.19.2"
-ENV K9S_VERSION "0.22.1"
+ENV K8S_VERSION "1.19.6"
+ENV K9S_VERSION "0.24.2"
 ENV DUMB_INIT_VERSION "1.2.2"
 ENV KREW_VERSION "0.4.0"
-ENV HELM_VERSION "3.3.4"
+ENV HELM_VERSION "3.4.2"
+ENV HELMFILE_VERSION "0.135.0"
 ENV SOPS_VERSION "3.6.1"
-ENV AWSCLI_VERSION "2.0.50"
+ENV AWSCLI_VERSION "2.1.13"
+ENV AWS_IAM_AUTHENTICATOR_VERSION "1.18.9"
 ENV STERN_VERSION "1.11.0"
 ENV KUBE_PS1_VERSION "0.7.0"
-ENV YQ_VERSION "3.4.0"
-ENV DENO_VERSION "1.4.1"
+ENV YQ_VERSION "4.0.0"
+ENV DENO_VERSION "1.6.1"
+ENV TERRAFORM_VERSION "0.14.3"
 
 RUN \
   wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
@@ -64,6 +67,10 @@ RUN \
   rm -Rf /tmp/helm
 
 RUN \
+  curl -Lo /usr/bin/helmfile https://github.com/roboll/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_linux_amd64 && \
+  chmod +x /usr/bin/helmfile
+
+RUN \
   wget -O sops.deb https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops_${SOPS_VERSION}_amd64.deb && \
   apt-get install ./sops.deb && \
   rm -f ./sops.deb
@@ -75,6 +82,10 @@ RUN \
   unzip awscliv2.zip && \
   ./aws/install && \
   rm -Rf /root/awscli
+
+RUN \
+  curl -Lo /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/${AWS_IAM_AUTHENTICATOR_VERSION}/2020-04-16/bin/linux/amd64/aws-iam-authenticator && \
+  chmod +x /usr/bin/aws-iam-authenticator
 
 RUN \
   curl -Lo /usr/bin/stern https://github.com/wercker/stern/releases/download/${STERN_VERSION}/stern_linux_amd64 && \
@@ -99,10 +110,13 @@ RUN \
   kubectl krew install ns
 
 RUN \
-  curl -fsSL https://deno.land/x/install/install.sh | sh -s v${DENO_VERSION}
-
-RUN \
-  npm install -g json-schema-to-typescript
+  mkdir /tmp/terraform && \
+  cd /tmp/terraform && \
+  wget -O terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+  unzip terraform.zip && \
+  mv terraform /usr/bin/terraform && \
+  chmod +x /usr/bin/terraform && \
+  rm -Rf /tmp/terraform
 
 VOLUME /ssh
 VOLUME /iac
