@@ -1,4 +1,4 @@
-FROM shopstic/jdk11-sbt:1.4.4
+FROM shopstic/jdk11-sbt:1.4.5
 
 ENV FDB_VERSION "6.2.27"
 
