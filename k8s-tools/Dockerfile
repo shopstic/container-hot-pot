@@ -76,6 +76,9 @@ RUN \
   rm -f ./sops.deb
 
 RUN \
+  helm plugin install https://github.com/futuresimple/helm-secrets
+
+RUN \
   mkdir /root/awscli && \
   cd /root/awscli && \
   wget -O awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_VERSION}.zip" && \
