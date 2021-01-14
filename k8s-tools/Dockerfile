@@ -76,7 +76,7 @@ RUN \
   rm -f ./sops.deb
 
 RUN \
-  helm plugin install https://github.com/futuresimple/helm-secrets
+  helm plugin install https://github.com/jkroepke/helm-secrets
 
 RUN \
   mkdir /root/awscli && \
@@ -89,6 +89,9 @@ RUN \
 RUN \
   curl -Lo /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/${AWS_IAM_AUTHENTICATOR_VERSION}/2020-04-16/bin/linux/amd64/aws-iam-authenticator && \
   chmod +x /usr/bin/aws-iam-authenticator
+
+RUN \
+  curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
 RUN \
   curl -Lo /usr/bin/stern https://github.com/wercker/stern/releases/download/${STERN_VERSION}/stern_linux_amd64 && \
