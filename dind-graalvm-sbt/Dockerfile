@@ -3,6 +3,7 @@ FROM ubuntu:18.04
 ENV BAT_VERSION "0.17.1"
 ENV EXA_VERSION "0.9.0"
 ENV RIPGREP_VERSION "12.1.1"
+ENV GRAALVM_VERSION "21.0.0"
 
 RUN apt-get update
 
@@ -29,10 +30,10 @@ RUN \
   zsh
 
 RUN \
-  curl -Lo graalvm-ce-java11-linux-amd64-20.1.0.tar.gz "https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-20.1.0/graalvm-ce-java11-linux-amd64-20.1.0.tar.gz" && \
-  tar -zxvf graalvm-ce-java11-linux-amd64-20.1.0.tar.gz
+  wget "https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${GRAALVM_VERSION}/graalvm-ce-java11-linux-amd64-${GRAALVM_VERSION}.tar.gz" && \
+  tar -zxvf graalvm-ce-java11-linux-amd64-${GRAALVM_VERSION}.tar.gz
 
-ENV PATH="$PATH:/graalvm-ce-java11-20.1.0/bin"
+ENV PATH="$PATH:/graalvm-ce-java11-${GRAALVM_VERSION}/bin"
 
 ENV SBT_VERSION "1.3.12"
 
