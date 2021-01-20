@@ -28,11 +28,11 @@ echo "FDB_MACHINE_ID=${FDB_MACHINE_ID}"
 AVAILABILITY_ZONE=${AVAILABILITY_ZONE:-""}
 
 if [[ "${AVAILABILITY_ZONE}" == "" ]]; then
-  AVAILABILITY_ZONE=$(kubectl get no ${FDB_MACHINE_ID} -o json | jq -r '.metadata.labels["failure-domain.beta.kubernetes.io/zone"]')
+  AVAILABILITY_ZONE=$(kubectl get no "${FDB_MACHINE_ID}" -o json | jq -r '.metadata.labels["failure-domain.beta.kubernetes.io/zone"]')
 fi
 
 if [[ "${AVAILABILITY_ZONE}" == "null" ]]; then
-  AVAILABILITY_ZONE=$(kubectl get no ${FDB_MACHINE_ID} -o json | jq -r '.metadata.labels["topology.kubernetes.io/zone"]')
+  AVAILABILITY_ZONE=$(kubectl get no "${FDB_MACHINE_ID}" -o json | jq -r '.metadata.labels["topology.kubernetes.io/zone"]')
 fi
 
 if [[ "${AVAILABILITY_ZONE}" == "null" ]]; then
@@ -45,7 +45,7 @@ FDB_DATA_HALL=${FDB_DATA_HALL:-"${AVAILABILITY_ZONE}"}
 echo "FDB_ZONE_ID=${FDB_ZONE_ID}"
 echo "FDB_DATA_HALL=${FDB_DATA_HALL}"
 
-FDB_PUBLIC_IP=${FDB_PUBLIC_IP:-$(grep `hostname` /etc/hosts | sed -e "s/\s *`hostname`.*//")}
+FDB_PUBLIC_IP=${FDB_PUBLIC_IP:-$(grep "$(hostname)" /etc/hosts | sed -e "s/\s *$(hostname).*//")}
 
 echo "FDB_PUBLIC_IP=${FDB_PUBLIC_IP}"
 
