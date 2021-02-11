@@ -3,48 +3,47 @@ FROM ubuntu:18.04
 RUN \
   apt-get update && \
   apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common \
-    wget \
-    apt-transport-https \
-    gnupg2 \
-    nano \
-    sshpass \
-    openssh-client \
-    openssh-server \
-    git \
-    unzip \
-    pv \
-    rsync \
-    jq \
-    vim \
-    zsh && \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  gnupg-agent \
+  software-properties-common \
+  wget \
+  apt-transport-https \
+  gnupg2 \
+  nano \
+  sshpass \
+  openssh-client \
+  openssh-server \
+  git \
+  unzip \
+  pv \
+  rsync \
+  jq \
+  vim \
+  zsh && \
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
   add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable" && \
+  "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) \
+  stable" && \
   apt-get install -y docker-ce-cli && \
   curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
   apt-get install -y nodejs && \
   rm -rf /var/lib/apt/lists/*
 
-ENV K8S_VERSION "1.19.6"
+ENV K8S_VERSION "1.19.7"
 ENV K9S_VERSION "0.24.2"
 ENV DUMB_INIT_VERSION "1.2.2"
 ENV KREW_VERSION "0.4.0"
-ENV HELM_VERSION "3.4.2"
-ENV HELMFILE_VERSION "0.135.0"
+ENV HELM_VERSION "3.5.2"
+ENV HELMFILE_VERSION "0.138.4"
 ENV SOPS_VERSION "3.6.1"
 ENV AWSCLI_VERSION "2.1.13"
 ENV AWS_IAM_AUTHENTICATOR_VERSION "1.18.9"
-ENV STERN_VERSION "1.11.0"
+ENV STERN_VERSION "1.14.0"
 ENV KUBE_PS1_VERSION "0.7.0"
 ENV YQ_VERSION "4.0.0"
-ENV DENO_VERSION "1.6.1"
 ENV TERRAFORM_VERSION "0.14.3"
 
 RUN \
@@ -94,7 +93,7 @@ RUN \
   curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
 RUN \
-  curl -Lo /usr/bin/stern https://github.com/wercker/stern/releases/download/${STERN_VERSION}/stern_linux_amd64 && \
+  curl -L https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_amd64.tar.gz | tar -xz -C /usr/bin --strip-components=1 && \
   chmod +x /usr/bin/stern
 
 RUN \
