@@ -1,7 +1,9 @@
+ARG PACKAGE_VERSION="6.2.29"
+
 # kubectl ------------------------------------------------------------------
 FROM shopstic/curl-tar-unzip:1.0.1 as kubectl
 
-ENV K8S_VERSION "1.19.2"
+ENV K8S_VERSION "1.19.7"
 
 RUN \
   curl -Lo /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
@@ -25,7 +27,7 @@ RUN \
   curl -Lo /usr/bin/jq https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64 && \
   chmod +x /usr/bin/jq
 
-FROM foundationdb/foundationdb:6.2.27
+FROM foundationdb/foundationdb:${PACKAGE_VERSION}
 
 WORKDIR /app
 RUN \

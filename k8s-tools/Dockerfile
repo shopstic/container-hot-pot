@@ -3,6 +3,8 @@ FROM ubuntu:18.04
 RUN \
   apt-get update && \
   apt-get install -y \
+  netcat \
+  openvpn \
   apt-transport-https \
   ca-certificates \
   curl \
@@ -30,6 +32,11 @@ RUN \
   apt-get install -y docker-ce-cli && \
   curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
   apt-get install -y nodejs && \
+  . /etc/os-release && \
+  echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list && \
+  curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key | apt-key add - && \
+  apt-get update && \
+  apt-get install -y skopeo && \
   rm -rf /var/lib/apt/lists/*
 
 ENV K8S_VERSION "1.19.7"
@@ -43,8 +50,10 @@ ENV AWSCLI_VERSION "2.1.13"
 ENV AWS_IAM_AUTHENTICATOR_VERSION "1.18.9"
 ENV STERN_VERSION "1.14.0"
 ENV KUBE_PS1_VERSION "0.7.0"
-ENV YQ_VERSION "4.0.0"
+ENV YQ_VERSION "4.5.1"
 ENV TERRAFORM_VERSION "0.14.3"
+ENV HELM_SECRETS_VERSION "3.4.1"
+ENV HELM_DIFF_VERSION "3.1.3"
 
 RUN \
   wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
@@ -75,7 +84,10 @@ RUN \
   rm -f ./sops.deb
 
 RUN \
-  helm plugin install https://github.com/jkroepke/helm-secrets
+  helm plugin install https://github.com/jkroepke/helm-secrets --version="v${HELM_SECRETS_VERSION}"
+
+RUN \
+  helm plugin install https://github.com/databus23/helm-diff --version="v${HELM_DIFF_VERSION}"
 
 RUN \
   mkdir /root/awscli && \
@@ -100,7 +112,7 @@ RUN \
   wget -O /root/kube-ps1.sh https://raw.githubusercontent.com/jonmosco/kube-ps1/v${KUBE_PS1_VERSION}/kube-ps1.sh
 
 RUN \
-  curl -Lo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 && \
+  curl -Lo /usr/bin/yq  https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 && \
   chmod +x /usr/bin/yq
 
 RUN \

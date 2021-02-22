@@ -28,7 +28,7 @@ RUN \
   curl -Lo /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 && \
   chmod +x /usr/bin/dumb-init
 
-ENV K8S_VERSION "1.19.2"
+ENV K8S_VERSION "1.19.7"
 
 RUN \
   curl -Lo /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
