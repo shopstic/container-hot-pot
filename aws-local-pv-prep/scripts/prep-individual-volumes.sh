@@ -1,4 +1,4 @@
-#!/usr/bin/dumb-init /bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 PV_MOUNT_PATH=${PV_MOUNT_PATH:?"PV_MOUNT_PATH environment variable is not set"}
