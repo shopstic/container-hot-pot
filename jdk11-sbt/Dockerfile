@@ -1,4 +1,4 @@
-FROM openjdk:11.0.9.1-slim as stage0
+FROM openjdk:11.0.10-slim as stage0
 
 RUN \
   apt-get update && \
@@ -22,7 +22,7 @@ RUN \
   sbt sbtVersion && \
   rm -Rf ~/temp
 
-ENV FDB_VERSION "6.2.27"
+ENV FDB_VERSION "6.2.29"
 
 RUN \
   curl -Lko fdb-clients.deb https://www.foundationdb.org/downloads/${FDB_VERSION}/ubuntu/installers/foundationdb-clients_${FDB_VERSION}-1_amd64.deb && \
