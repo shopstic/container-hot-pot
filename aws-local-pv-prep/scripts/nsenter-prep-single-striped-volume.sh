@@ -5,13 +5,24 @@ PV_MOUNT_PATH=${PV_MOUNT_PATH:?"PV_MOUNT_PATH environment variable is not set"}
 LV_NAME=${LV_NAME:?"LV_NAME environment variable is not set"}
 STRIPE_SIZE=${STRIPE_SIZE:?"STRIPE_SIZE environment variable is not set"}
 
+OS_ID_LIKE=$(cat /etc/*-release | grep "ID_LIKE" | cut -d "=" -f2)
+
+install_package() {
+  if [[ "${OS_ID_LIKE}" == "debian" ]]; then
+    sudo apt-get update
+    sudo apt-get install -y "$@"
+  else
+    yum install -y "$@"
+  fi
+}
+
 if lvs -a --noheadings | grep --quiet "${LV_NAME}"; then
   echo "LV with name '${LV_NAME}' already exists, nothing to do"
   exit 0
 fi
 
 echo "Installing nvme-cli"
-yum install -y nvme-cli
+install_package nvme-cli
 
 echo "Preparing local persistent volumes"
 SSD_NVME_DEVICE_LIST=($(nvme list | grep "Amazon EC2 NVMe Instance Storage" | cut -d " " -f 1 || true))
