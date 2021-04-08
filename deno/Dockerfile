@@ -11,11 +11,9 @@ ARG PACKAGE_VERSION
 RUN \
   curl -fsSL https://deno.land/x/install/install.sh | sh -s v${PACKAGE_VERSION}
 
-FROM debian:bullseye-20200908-slim as app
+FROM debian:bullseye-20200908-slim
 
-ENV PATH=/root/.deno/bin/:$PATH
-
-COPY --from=build /root/.deno /root/.deno
+COPY --from=build /root/.deno/bin/deno /usr/bin/deno
 
 
 
