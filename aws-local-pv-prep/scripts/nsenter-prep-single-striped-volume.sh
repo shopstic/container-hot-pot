@@ -16,10 +16,14 @@ install_package() {
   fi
 }
 
-if lvs -a --noheadings | grep --quiet "${LV_NAME}"; then
-  echo "LV with name '${LV_NAME}' already exists, nothing to do"
-  exit 0
+if mountpoint "${PV_MOUNT_PATH}"; then
+  echo "Mountpoint '${PV_MOUNT_PATH}' already exists, nothing to do"
 fi
+
+# if lvs -a --noheadings | grep --quiet "${LV_NAME}"; then
+#   echo "LV with name '${LV_NAME}' already exists, nothing to do"
+#   exit 0
+# fi
 
 echo "Installing nvme-cli"
 install_package nvme-cli
@@ -41,12 +45,12 @@ pvcreate -v "${SSD_NVME_DEVICE_LIST[@]}"
 pvs
 vgcreate -v "${LV_NAME}" "${SSD_NVME_DEVICE_LIST[@]}"
 vgs
-lvcreate -l 100%FREE -i "${SSD_NVME_DEVICE_COUNT}" -I "${STRIPE_SIZE}" -n "${LV_NAME}" "${LV_NAME}"
+lvcreate -y -l 100%FREE -i "${SSD_NVME_DEVICE_COUNT}" -I "${STRIPE_SIZE}" -n "${LV_NAME}" "${LV_NAME}"
 lvs
 
 DEVICE="/dev/${LV_NAME}/${LV_NAME}"
 echo "Formatting LV '${LV_NAME}' as ext4"
-mkfs.ext4 -m 0 -b "${FILESYSTEM_BLOCK_SIZE}" "${DEVICE}"
+mkfs.ext4 -F -m 0 -b "${FILESYSTEM_BLOCK_SIZE}" "${DEVICE}"
 
 echo "Writing to /etc/fstab"
 printf "${DEVICE}\t${PV_MOUNT_PATH}\text4\tdefaults,noatime,discard\t0 0\n" | tee -a /etc/fstab

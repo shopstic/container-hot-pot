@@ -33,7 +33,7 @@ do
     echo "Device was already formatted, skipping: ${DEVICE}"
   else
     echo "Formatting ${DEVICE}"
-    mkfs.ext4 -m 0 -b "${FILESYSTEM_BLOCK_SIZE}" "${DEVICE}"
+    mkfs.ext4 -F -m 0 -b "${FILESYSTEM_BLOCK_SIZE}" "${DEVICE}"
     UUID=$(blkid -s UUID -o value "${DEVICE}")
     mkdir -p "${PV_MOUNT_PATH}/${UUID}"
     chattr +i "${PV_MOUNT_PATH}/${UUID}"
