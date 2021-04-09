@@ -1,4 +1,6 @@
-FROM shopstic/fdb-base:6.2.29
+ARG PACKAGE_VERSION
+
+FROM shopstic/fdb-base:${PACKAGE_VERSION}
 
 COPY ./entrypoint.sh /app/entrypoint.sh
 

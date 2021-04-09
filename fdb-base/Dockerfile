@@ -1,9 +1,9 @@
-ARG PACKAGE_VERSION="6.2.29"
+ARG PACKAGE_VERSION
 
 # kubectl ------------------------------------------------------------------
 FROM shopstic/curl-tar-unzip:1.0.1 as kubectl
 
-ENV K8S_VERSION "1.19.7"
+ENV K8S_VERSION "1.20.4"
 
 RUN \
   curl -Lo /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl && \
@@ -18,7 +18,7 @@ RUN \
   curl -Lo /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 && \
   chmod +x /usr/bin/dumb-init
 
-# yq ------------------------------------------------------------------
+# jq ------------------------------------------------------------------
 FROM shopstic/curl-tar-unzip:1.0.0 as jq
 
 ENV JQ_VERSION "1.6"
