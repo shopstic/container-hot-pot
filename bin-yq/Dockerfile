@@ -1,4 +1,4 @@
-FROM shopstic/curl-tar-unzip:1.0.1 as kubectl
+FROM shopstic/curl-tar-unzip:1.0.1 as yq
 
 ARG PACKAGE_VERSION
 
@@ -7,4 +7,4 @@ RUN \
   chmod +x /usr/bin/yq
 
 FROM scratch
-COPY --from=kubectl /usr/bin/yq /usr/bin/yq
+COPY --from=yq /usr/bin/yq /usr/bin/yq

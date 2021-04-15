@@ -5,7 +5,7 @@ ARG PACKAGE_VERSION
 RUN \
   mkdir /tmp/deno && \
   cd /tmp/deno && \
-  curl -Lo ./deno.zip https://github.com/denoland/deno/releases/download/v1.8.3/deno-x86_64-unknown-linux-gnu.zip && \
+  curl -Lo ./deno.zip https://github.com/denoland/deno/releases/download/v${PACKAGE_VERSION}/deno-x86_64-unknown-linux-gnu.zip && \
   unzip ./deno.zip && \
   cp ./deno /usr/bin/deno && \
   chmod +x /usr/bin/deno && \
