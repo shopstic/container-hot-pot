@@ -29,4 +29,4 @@ jobs:
 
       - name: Reconcile
         run: |
-          ./cli reconcile 2
+          ./cli reconcile 4
