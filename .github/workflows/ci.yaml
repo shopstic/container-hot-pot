@@ -1,0 +1,32 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  reconcile:
+    name: Reconcile all images
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Enable Docker CLI experimental
+        run: |
+          mkdir -p ~/.docker
+          echo '{"experimental":"enabled"}' > ~/.docker/config.json
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Reconcile
+        run: |
+          ./cli reconcile 2

@@ -1,40 +1,33 @@
 #!/usr/bin/env bash
-
-which docker-registry-semver-bump > /dev/null 2>&1
-TEST_EXIT=$?
-if [ $TEST_EXIT -ne 0 ]; then
-  echo "docker-registry-semver-bump does not exist, please install it first"
-  exit $TEST_EXIT
-fi
-
-SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN:?"SHOPSTIC_GITHUB_TOKEN env is required"}
-
 set -euo pipefail
 
 reconcile_tool() {
   NAME=${1:?"Tool name is required"}
   FORCE=${2:-""}
   echo "Reconciling ${NAME}..."
-  CURRENT_VERSION=$(docker-registry-semver-bump -image shopstic/${NAME} -version current)
-  NEW_VERSION=$(cat ./${NAME}/version)
+  
+  NEW_VERSION=$(cat "./${NAME}/version")
+  IMAGE_NAME="shopstic/${NAME}:${NEW_VERSION}"
 
-  if [[ "${CURRENT_VERSION}" == "${NEW_VERSION}" && "${FORCE}" != "force" ]]; then
-    echo "No need to update ${NAME}"
-    exit 0
+  if docker manifest inspect "${IMAGE_NAME}" > /dev/null 2>&1; then
+    if [[ "${FORCE}" != "force" ]]; then
+      echo "No need to update ${NAME}"
+      exit 0
+    fi
   fi
 
-  echo "Updating ${NAME} from ${CURRENT_VERSION} to ${NEW_VERSION}"
+  echo "Updating ${NAME} to ${NEW_VERSION}"
   cd "./${NAME}"
   export DOCKER_BUILDKIT=1
-  docker build --build-arg "SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN}" --build-arg "PACKAGE_VERSION=${NEW_VERSION}" -t "shopstic/${NAME}:${NEW_VERSION}" .
-  docker push "shopstic/${NAME}:${NEW_VERSION}"
+  docker build --build-arg "SHOPSTIC_GITHUB_TOKEN=${SHOPSTIC_GITHUB_TOKEN}" --build-arg "PACKAGE_VERSION=${NEW_VERSION}" -t "${IMAGE_NAME}" .
+  docker push "${IMAGE_NAME}"
 }
 
 reconcile() {
   PARALLELISM=${1:-"6"}
   find . -maxdepth 1 -type d -not -path . -not -name ".*" -exec test -e "{}/version" ';' -print | \
     xargs -I '{}' basename "{}" | \
-    xargs -I '{}' -n 1 -P ${PARALLELISM} ./cli reconcile_tool "{}"
+    xargs -I '{}' -n 1 -P "${PARALLELISM}" ./cli reconcile_tool "{}"
 }
 
-$@
+"$@"
