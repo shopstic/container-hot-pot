@@ -5,13 +5,13 @@ reconcile_tool() {
   NAME=${1:?"Tool name is required"}
   FORCE=${2:-""}
   echo "Reconciling ${NAME}..."
-  
+
   NEW_VERSION=$(cat "./${NAME}/version")
   IMAGE_NAME="shopstic/${NAME}:${NEW_VERSION}"
 
   if docker manifest inspect "${IMAGE_NAME}" > /dev/null 2>&1; then
     if [[ "${FORCE}" != "force" ]]; then
-      echo "No need to update ${NAME}"
+      echo "No need to update ${IMAGE_NAME}"
       exit 0
     fi
   fi
@@ -27,7 +27,7 @@ reconcile() {
   PARALLELISM=${1:-"6"}
   find . -maxdepth 1 -type d -not -path . -not -name ".*" -exec test -e "{}/version" ';' -print | \
     xargs -I '{}' basename "{}" | \
-    xargs -I '{}' -n 1 -P "${PARALLELISM}" ./cli reconcile_tool "{}"
+    parallel --tagstring="[{}]" -N1 -j"${PARALLELISM}" ./cli reconcile_tool {}
 }
 
 "$@"
