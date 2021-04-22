@@ -22,7 +22,7 @@ RUN \
 RUN \
   mkdir /tmp/app && \
   cd /tmp/app && \
-  curl -L https://github.com/shopstic/fdb-prometheus-exporter/archive/657bc5ebebcb3fcef6bc8d6070c49ef142c90668.tar.gz | tar -xzf - --strip-components=1 -C . && \
+  curl -L https://github.com/shopstic/fdb-prometheus-exporter/archive/108ec7d3bac1d7a2ea180531936378026aa920cf.tar.gz | tar -xzf - --strip-components=1 -C . && \
   go get -d -v ./... && \
   go install -v ./... && \
   rm -Rf /tmp/app
