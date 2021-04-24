@@ -1,19 +1,5 @@
-FROM debian:bullseye-20200908-slim as build
+FROM shopstic/bin-deno:1.9.2 as bin-deno
 
-ENV PATH=/root/.deno/bin/:$PATH
+FROM ubuntu:20.04
 
-RUN \
-  apt-get update && \
-  apt-get install -y curl unzip
-
-ARG PACKAGE_VERSION
-
-RUN \
-  curl -fsSL https://deno.land/x/install/install.sh | sh -s v${PACKAGE_VERSION}
-
-FROM debian:bullseye-20200908-slim
-
-COPY --from=build /root/.deno/bin/deno /usr/bin/deno
-
-
-
+COPY --from=bin-deno /usr/bin/deno /usr/bin/deno
