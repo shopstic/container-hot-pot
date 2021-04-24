@@ -1,6 +1,6 @@
-ARG PACKAGE_VERSION
-
 FROM ubuntu:20.04 as bin-nodejs-stage
+
+ARG PACKAGE_VERSION
 
 RUN \
   apt-get update && \
