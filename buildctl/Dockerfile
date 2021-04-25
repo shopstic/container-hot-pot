@@ -10,4 +10,4 @@ COPY --from=bin-docker / /
 
 RUN \
   apk update && \
-  apk add bash
+  apk add bash parallel
