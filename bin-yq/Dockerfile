@@ -1,4 +1,4 @@
-FROM shopstic/curl-tar-unzip:1.0.1 as yq
+FROM shopstic/curl-tar-unzip:1.0.1 as jq
 
 ARG PACKAGE_VERSION
 
