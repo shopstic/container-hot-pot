@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-cp /data/* /target/*
+cp /data/* /target/
