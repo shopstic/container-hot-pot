@@ -1,7 +1,7 @@
 ARG PACKAGE_VERSION
 
 FROM shopstic/bin-buildctl:${PACKAGE_VERSION} as bin-buildctl
-FROM shopstic/bin-docker:20.10.6 as bin-docker
+FROM shopstic/bin-docker:20.10.8 as bin-docker
 FROM shopstic/bin-jq:1.6 as bin-jq
 
 FROM ubuntu:20.04

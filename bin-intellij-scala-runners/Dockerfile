@@ -5,7 +5,7 @@ FROM shopstic/curl-tar-unzip:1.0.1 as runners
 RUN \
   mkdir /download && \
   cd /download && \
-  curl -Lo plugin.zip "https://plugins.jetbrains.com/plugin/download?rel=true&updateId=118422" && \
+  curl -Lo plugin.zip "https://plugins.jetbrains.com/plugin/download?rel=true&updateId=133149" && \
   unzip plugin.zip && \
   mkdir /var/lib/intellij-scala-runners/ && \
   mv ./Scala/lib/runners.jar /var/lib/intellij-scala-runners/ && \
