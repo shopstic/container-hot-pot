@@ -8,4 +8,5 @@ until test -e /var/run/docker.sock; do
 done
 
 chmod 0666 /var/run/docker.sock
+"$@"
 wait

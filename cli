@@ -19,7 +19,9 @@ reconcile_tool() {
   echo "Updating ${NAME} to ${NEW_VERSION}"
   cd "./${NAME}"
   export DOCKER_BUILDKIT=1
-  docker build --build-arg "PACKAGE_VERSION=${NEW_VERSION}" -t "${IMAGE_NAME}" .
+  docker build \
+    --build-arg "PACKAGE_VERSION=${NEW_VERSION}" \
+    -t "${IMAGE_NAME}" .
   docker push "${IMAGE_NAME}"
 }
 
