@@ -1,6 +1,4 @@
-ARG PACKAGE_VERSION
-
-FROM summerwind/actions-runner-dind:${PACKAGE_VERSION}
+FROM summerwind/actions-runner-dind:v2.285.0-ubuntu-20.04-f517525
 
 USER root
 RUN \
