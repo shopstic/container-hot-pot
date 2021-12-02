@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+
 reconcile_tool() {
   NAME=${1:?"Tool name is required"}
   FORCE=${2:-""}
