@@ -3,7 +3,8 @@ FROM summerwind/actions-runner-dind:v2.285.1-ubuntu-20.04-4a55fe5
 USER root
 RUN \
   mkdir /nix \
-  && chown runner:runner /nix
+  && chown runner:runner /nix \
+  && ln -s /nix /nix-base
 
 USER runner
 ARG NIX_VERSION=2.4
@@ -12,8 +13,7 @@ RUN \
   && wget https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
   && tar xf nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
   && sh nix-${NIX_VERSION}-$(uname -m)-linux/install \
-  && rm -rf nix-${NIX_VERSION}-$(uname -m)-linux* && \
-  ln -s /nix /nix-base
+  && rm -rf nix-${NIX_VERSION}-$(uname -m)-linux*
 
 ENV \
   PATH=$HOME/.nix-profile/bin:$PATH \
