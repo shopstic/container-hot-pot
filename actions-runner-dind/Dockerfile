@@ -1,4 +1,4 @@
-FROM summerwind/actions-runner-dind:v2.285.0-ubuntu-20.04-f517525
+FROM summerwind/actions-runner-dind:v2.285.1-ubuntu-20.04-4a55fe5
 
 USER root
 RUN \
@@ -12,7 +12,8 @@ RUN \
   && wget https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
   && tar xf nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
   && sh nix-${NIX_VERSION}-$(uname -m)-linux/install \
-  && rm -rf nix-${NIX_VERSION}-$(uname -m)-linux*
+  && rm -rf nix-${NIX_VERSION}-$(uname -m)-linux* && \
+  ln -s /nix /nix-base
 
 ENV \
   PATH=$HOME/.nix-profile/bin:$PATH \
