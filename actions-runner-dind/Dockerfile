@@ -2,9 +2,8 @@ FROM summerwind/actions-runner-dind:v2.285.1-ubuntu-20.04-4a55fe5
 
 USER root
 RUN \
-  mkdir /nix-base \
-  && chown runner:runner /nix-base \
-  && ln -s /nix-base /nix
+  mkdir /nix \
+  && chown runner:runner /nix
 
 USER runner
 ARG NIX_VERSION=2.4
