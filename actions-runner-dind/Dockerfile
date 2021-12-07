@@ -4,7 +4,7 @@ USER root
 RUN \
   mkdir /nix \
   && chown runner:runner /nix \
-  && ln -s /nix /nix-base
+  && ln /nix /nix-base
 
 USER runner
 ARG NIX_VERSION=2.4
