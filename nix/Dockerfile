@@ -20,14 +20,16 @@ RUN \
   mkdir /nix \
   && chown runner:runner /nix
 
-USER runner
 COPY --from=installer /installer /installer
+
 RUN \
-  sh /installer/install \
+  su -c 'sh /installer/install' runner \
   && rm -Rf /installer
 
+USER runner
+
 ENV \
-  PATH=$HOME/.nix-profile/bin:$PATH \
+  PATH=/home/runner/.nix-profile/bin:$PATH \
   GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt \
   NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
