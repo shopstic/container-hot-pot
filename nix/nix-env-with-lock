@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-exec flock -w 3600 /root/.cache/nix-env.lock nix-env "$@"
