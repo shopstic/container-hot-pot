@@ -1,4 +1,9 @@
-FROM docker.io/library/alpine:3.15.0@sha256:21a3deaa0d32a8057914f36584b5288d2e5ecc984380bc0118285c70fa8c9300
+FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322
+
+RUN \
+  groupadd --gid 1001 runner && \
+  useradd --home-dir /home/runner --create-home --uid 1001 \
+  --gid 1001 --shell /bin/bash --skel /dev/null runner
 
 RUN \
   mkdir /nix \
