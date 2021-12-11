@@ -1,3 +1,14 @@
+FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322 as installer
+
+RUN \
+  apt update \
+  && apt install -y curl xz-utils
+
+ARG NIX_VERSION=2.4
+RUN \
+  mkdir /installer && \
+  curl -Lo - https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz | tar -xJ -C /installer/ --strip-components=1
+
 FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322
 
 RUN \
@@ -10,13 +21,10 @@ RUN \
   && chown runner:runner /nix
 
 USER runner
-ARG NIX_VERSION=2.4
+COPY --from=installer /installer /installer
 RUN \
-  cd $HOME \
-  && wget https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
-  && tar xf nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
-  && sh nix-${NIX_VERSION}-$(uname -m)-linux/install \
-  && rm -rf nix-${NIX_VERSION}-$(uname -m)-linux*
+  sh /installer/install \
+  && rm -Rf /installer
 
 ENV \
   PATH=$HOME/.nix-profile/bin:$PATH \
