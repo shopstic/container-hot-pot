@@ -1,8 +1,8 @@
 FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322 as installer
 
 RUN \
-  apt update \
-  && apt install -y curl xz-utils
+  apt-get update \
+  && apt-get install -y curl xz-utils
 
 ARG NIX_VERSION=2.4
 RUN \
@@ -10,6 +10,10 @@ RUN \
   curl -Lo - https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz | tar -xJ -C /installer/ --strip-components=1
 
 FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322
+
+RUN \
+  apt-get update \
+  && apt-get install -y ca-certificates git
 
 RUN \
   groupadd --gid 1001 runner && \
