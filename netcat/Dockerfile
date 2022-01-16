@@ -1,5 +1,5 @@
-FROM alpine:3.15.0
+FROM ubuntu:20.04
 
-RUN apk add netcat-openbsd
+RUN apt update && apt install -y netcat
 
 ENTRYPOINT ["nc"]
