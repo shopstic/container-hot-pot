@@ -1,5 +1,6 @@
-FROM ubuntu:20.04
+FROM alpine:3.15.0
 
-RUN apt update && apt install -y netcat
+COPY --from=docker.io/shopstic/dumb-init:1.2.2 /usr/bin/dumb-init /usr/bin/dumb-init
+RUN apk add netcat-openbsd
 
-ENTRYPOINT ["nc"]
+ENTRYPOINT ["dumb-init", "--", "nc"]
