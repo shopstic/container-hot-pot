@@ -1,4 +1,4 @@
-FROM summerwind/actions-runner-dind:v2.285.1-ubuntu-20.04-4a55fe5
+FROM summerwind/actions-runner-dind:v2.289.1-ubuntu-20.04-debf53c
 
 USER root
 RUN \
