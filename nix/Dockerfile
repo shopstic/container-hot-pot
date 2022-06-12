@@ -1,15 +1,15 @@
-FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322 as installer
+FROM public.ecr.aws/lts/ubuntu:22.04_stable@sha256:62b8f60c5c8e1717f460bb7af05e558b74feb8ac460ff2abbdd3a98becdc15ce as installer
 
 RUN \
   apt-get update \
   && apt-get install -y curl xz-utils
 
-ARG NIX_VERSION=2.4
+ARG NIX_VERSION=2.9.1
 RUN \
   mkdir /installer && \
   curl -Lo - https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz | tar -xJ -C /installer/ --strip-components=1
 
-FROM docker.io/library/ubuntu:focal-20211006@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322
+FROM public.ecr.aws/lts/ubuntu:22.04_stable@sha256:62b8f60c5c8e1717f460bb7af05e558b74feb8ac460ff2abbdd3a98becdc15ce
 
 RUN \
   apt-get update \
@@ -37,4 +37,6 @@ ENV \
   GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt \
   NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
+COPY .gitconfig /home/runner/.gitconfig
+  
 ADD ./nix.conf /etc/nix/nix.conf
