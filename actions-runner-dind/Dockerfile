@@ -6,7 +6,7 @@ RUN \
   && chown runner:runner /nix
 
 USER runner
-ARG NIX_VERSION=2.7.0
+ARG NIX_VERSION=2.10.3
 RUN \
   cd $HOME \
   && wget https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz \
