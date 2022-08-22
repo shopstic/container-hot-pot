@@ -1,24 +1,25 @@
-FROM public.ecr.aws/lts/ubuntu:22.04_stable@sha256:62b8f60c5c8e1717f460bb7af05e558b74feb8ac460ff2abbdd3a98becdc15ce as installer
+FROM public.ecr.aws/lts/ubuntu:22.04_stable@sha256:00dab66161cbfde10804978655472bfb7764257af53ed4742b24081615b783c4 as installer
 
 RUN \
   apt-get update \
   && apt-get install -y curl xz-utils
 
-ARG NIX_VERSION=2.9.1
+ARG NIX_VERSION=2.10.3
 RUN \
   mkdir /installer && \
   curl -Lo - https://nixos.org/releases/nix/nix-${NIX_VERSION}/nix-${NIX_VERSION}-$(uname -m)-linux.tar.xz | tar -xJ -C /installer/ --strip-components=1
 
-FROM public.ecr.aws/lts/ubuntu:22.04_stable@sha256:62b8f60c5c8e1717f460bb7af05e558b74feb8ac460ff2abbdd3a98becdc15ce
+FROM public.ecr.aws/lts/ubuntu:22.04_stable@sha256:00dab66161cbfde10804978655472bfb7764257af53ed4742b24081615b783c4
 
 RUN \
   apt-get update \
-  && apt-get install -y ca-certificates git
+  && apt-get install -y ca-certificates git sudo
 
 RUN \
   groupadd --gid 1001 runner && \
   useradd --home-dir /home/runner --create-home --uid 1001 \
-  --gid 1001 --shell /bin/bash --skel /dev/null runner
+  --gid 1001 --shell /bin/bash --skel /dev/null runner && \
+  echo "runner  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/runner
 
 RUN \
   mkdir /nix \
